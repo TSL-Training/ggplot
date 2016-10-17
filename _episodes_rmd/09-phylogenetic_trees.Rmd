@@ -1,0 +1,117 @@
+---
+title: "`ggtree` a package for plotting phylogenetic trees"
+teaching: 15
+exercises: 25
+questions:
+- "How do I render and annotate a tree from an existing tree file?"
+objectives:
+- "Understanding the basics of `ggtree`"
+- "Annotating Nodes"
+- "Grouping Clades"
+keypoints:
+- "ggtree is a relative of ggplot for trees"
+- "ggtree contains many geoms for annotating trees"
+---
+```{r, echo=FALSE}
+source("../bin/chunk-options.R")
+knitr_fig_path("09-")
+```
+
+## `ggtree` - a Bioconductor package for displaying phylogenetic trees
+
+Bioconductor is a (very) large set of libraries for operating on biological data types [https://www.bioconductor.org/](https://www.bioconductor.org/) . `ggtree` is a library inspired by `ggplot` for drawing trees.  Much of what we've already seen in `ggplot` is transferrable to `ggtree` so the syntax should be familiar.
+
+> ## Installing `ggtree`
+> Installing bioconductor takes a long time and isn't done in the same way as with other R packages. To install first  run this special script in the R console (making sure you have an internet connection) :
+> `source("https://bioconductor.org/biocLite.R")` in the R console (making sure you have an internet connection). 
+> Bioconductor libraries can then be installed with the `biocLite()` function 
+> `biocLite("ggtree")
+{: .callout }
+
+
+`ggtree` takes a range of common tree formats as input. We'll use a sample file in `newick` format. This creates a special sort object called a 'phylo' object that knows all sorts of information about the tree.
+
+```{r}
+library(ggtree)
+tree <- read.tree("data/mammals.nwk")
+str(tree)
+```
+The tree can be drawn using the `geom_tree()` function.
+
+```{r}
+ggplot(tree) + geom_tree()
+```
+
+There is a special theme that sorts out the background for trees:
+
+```{r}
+ggplot(tree) + geom_tree() + theme_tree()
+```
+And because you nearly always want these three `ggtree` provides a utility function to do all of that - `ggtree()`
+```{r}
+ggtree(tree)
+```
+
+With this function we can add layout options
+```{r}
+ggtree(tree, layout = "circular")
+```
+
+### Labels
+Adding labels to treetips is done with the `geom_tiplab()` geom.
+```{r}
+ggtree(tree) + geom_tiplab(size=3, color="purple")
+```
+
+Adding the nodes is done with special options to the `geom_point()` geom. The shape and colour aesthetics are set to the variable `isTip` which is an internal variable in the tree object.
+
+```{r}
+p <-  ggtree(tree) + geom_tiplab(size=3, color="purple")
+p + geom_point(aes(shape=isTip, color=isTip), size=3)
+```
+
+### Annotating and colouring clades
+More useful is the ability to colour particular bits of the tree. First let's add a highlight bar to the side of the tree highlighting the sea mammal family. To do this we need to find the first node in the tree common to the clade we want to highlight. For this it's node number 12 and we use the `geom_cladelabel()` geom to add. We can use multiple `geom_cladelabel()` layers for more labels.
+
+```{r}
+p + geom_cladelabel(node=12, label="Sea Mammals")
+```
+You can also use blocks of colour for this:
+```{r}
+p + geom_hilight(node=12, fill="steelblue", alpha=.6)
+```
+
+To actually find the node number we need we can use the `MRCA()` function and pass it a list of labels we want the most recent common ancestor for
+```{r}
+MRCA(tree, tip=c('seal','sea_lion'))
+```
+
+
+You can use this information to colour different parts of the tree, too. First you need to mark the tree objects as having a new `group` factor with the `groupClade()`, function and then dynamically colour by the new group factor
+```{r}
+tree <- groupClade(tree, node=12)
+ggtree(tree, aes(color=group, linetype=group))
+```
+
+And you can preferentially operate on a clade by using the geoms on particular group numbers, here adding a label only to group 1
+```{r}
+tree <- groupClade(tree, node=c(12, 13) )
+ggtree(tree, aes(color=group, linetype=group)) + geom_tiplab(aes(subset=(group==1)))
+```
+
+
+You can work on arbitrarily defined groups with the `groupOTU()` function
+```{r}
+tree <- groupOTU(tree, focus=c("monkey", "raccoon"))
+ggtree(tree, aes(color=group, linetype=group)) + geom_tiplab(aes(subset=(group==1)))
+```
+
+> ## Quiz
+> 1. Set up an analysis folder:
+>	1. Make a new folder called `analysis` on the Desktop
+>	2. Inside `analysis` make a new folder called `raw` and put `pinf_mtDNA.newick` into it.
+>	3. Start a new R Markdown document and save it in `analysis`
+> 2. Create a circular cladogram of the tree and annotate the tips with tip labels. Rotate them to layout better. Hint: See the documentation [here](http://bioconductor.org/packages/release/bioc/html/ggtree.html)
+> 3. Can you add the bootstrap values for each branchpoint? 
+> 4. Find the most recent common ancestor of US5 and PE_6096. Highlight the clade with a coloured box.
+{: .challenge}

@@ -1,0 +1,225 @@
+---
+title: "Using the stats functions in R"
+teaching: 15
+exercises: 0
+questions:
+- "How do I do some common test?"
+objectives:
+- "Using `t.test()` and calculating effect sizes"
+- "Using `lm()` for regression"
+- "Doing ANOVA with a linear model"
+keypoints: 
+- "There are a range of functions for doing every statistical test in R."
+---
+
+```{r, echo=FALSE}
+source("../bin/chunk-options.R")
+knitr_fig_path("10-")
+```
+
+R is built for statistics so in this section we'll look at some common statistics functions. First just getting the summary or descriptive statistics. 
+
+## Summary Statistics 
+
+Earlier we saw that R has very many ways to get summary statistics like the mean and standard deviation from entire datasets. These ranged from the `summary()` function. 
+
+```{r}
+ summary(iris)
+```
+
+But a better way to summarise by factor is with the `describeBy()` function in the `psych` package. Note you need to use `$` notation to describe the column with the factor you want to subset with. 
+
+```{r}
+library(psych)
+describeBy(iris, iris$Species)
+```
+With this you can get a nice, comprehensive table of summary statistics across all the numerical columns, divided by the chosen factor.
+
+For combinations of factors, you can use the `ddply()` function in the `plyr` package. Here you can choose a list of factors to summarise, but you must name the output columns and the R function to use. Helpfully the R function for a mean is `mean()` and the function for standard deviation is `sd()`.
+
+Here, we divide up on `cut` and `colour` using the make-a-list function `c()`, we tell `ddply` we want to `summarise` and that it should add a `mean` column using the `mean()` function and an `sd` column using the `sd(function)`
+
+```{r}
+ddply(diamonds, c('cut', 'color'), summarise, mean=mean(price), sd=sd(price) )
+```
+
+
+> ## `mean()` and `sd()`
+> R has even simpler functions for getting these values from lists of numbers, the `mean()` and `sd()` functions. These take lists of numbers, rather than whole datasets:
+> `mean(c(1,2,3))`
+>
+> `[1] 2`
+>
+> or
+> 
+> `mean(iris$Sepal.Length)`
+>
+> `[1] 5.843333`
+> 
+> These are useful for quick calculations, but less so for real datasets since you have to apply manually to every subset that you are interested in.
+{: .callout }
+
+## The independent _t_ test
+
+Let's look at the standard independent _t_ test. This is done with the `t.test()` function.  Let's look at the `iris` built in data set. 
+
+The general form for a tidy dataset with factors like `iris` is `t.test(measured_thing ~ grouping_factor, data=dataset)`, so to compare Petal Widths between Species in the `iris` dataset
+```{r}
+t.test(Petal.Width ~ Species, data = iris)
+```
+
+Recall that this data set has 3 levels in the Species factor. The _t_ test, is built for one to one comparisons only, so we must have just two things to compare (and if you end up doing more than one _t_-test to compare lots of groups, you probably should be using ANOVA!). 
+
+So lets use the `filter()` function from the `dplyr` package to select our two  
+```{r,warning=FALSE, message=FALSE}
+library(dplyr)
+small_iris <- filter(iris, Species == c("versicolor", "setosa"))
+t.test(Petal.Width ~ Species, data=small_iris)
+```
+
+
+The output is fairly clear, the `p-value` is significant at some number less than 0.000000000000000022 (which is a built in lower limit that is caused by R running out of decimal places). 
+
+The mean in each group is presented for each group, is the limits of the confidence interval of the range we would expect the true difference to fall between 95% of the time (this is not the CI of the mean of each data set!).
+
+
+
+### Effect size for a _t_ test.
+Even though the _p_ value is significant at the 95% level, we do not know whether it is a substantial difference. This is an important thing to assess too since small differences can be statistically significant simply by recording a difference many times (IE by having a large number of replicates), but small differences may not be meaningful in the real world. Effect size is one way of getting a measure of the size of the difference that is more meaningful and comparable between different experiments and answering whether the difference you've observed is substantive as well as significant. A responsible scientist will use both _p_ and effect size for deciding whether the difference between means has any real world meaning.
+
+There are loads of effect sizes, we will look at two common ones for a _t_ test, Cohen's _d_ and Rosenthal's `r`.
+
+
+#### Cohen's _d_
+Cohen's _d_ is a standardized measure of effect and can be thought of the number of standard deviations between the means. Different _d_ mean different things:
+
+<table>
+	<tr><td>~0.2</td><td>small effect</td></tr>
+	<tr><td>~0.5</td><td>medium effect</td></tr>
+	<tr><td>~0.8</td><td>large effect</td></tr>
+</table>
+
+
+The _d_ can be calculated using the `cohen.d()` function in the `effsize` package and it works just like the `t.test()` function
+
+```{r}
+library(effsize)
+cohen.d(Petal.Width ~ Species, data=small_iris)
+```
+
+Doing this throws an error, because of an inconsistency between the programmers of the `t.test()` function, the `filter()` function and the `cohen.d()` function. Even though we filtered our `iris` dataset to just two levels, the `levels` attribute of the `small_iris` dataset still says there are 3 levels!
+
+```{r}
+levels(small_iris$Species)
+```
+
+Which is annoying. The `t.test()` function just worked out the right number of levels, but the `cohen.d()` checks the `levels` attribute instead. This inconsistency is just a thing that happens when different people write different code. So to fix the levels after filtering we must manually set them
+
+```{r}
+small_iris$Species <- factor(small_iris$Species, levels = c("setosa", "versicolor"))
+cohen.d(Petal.Width ~ Species, data=small_iris)
+```
+
+And `cohen.d()` tells us this is a large difference, with _d_ = -6.663 (you can ignore the sign of the _d_).
+
+#### Rosenthal's _r_
+Another well used effect size is _r_. It is calculated with this formula, using _t_ and _df_ (degrees of freedom from the `t.test()`):
+
+![R](../fig/r.png)
+
+Different values of _r_ indicate different effect sizes, here's some rough rules.
+
+<table>
+	<tr><td>~0.1</td><td>small effect</td></tr>
+	<tr><td>~0.3</td><td>medium effect</td></tr>
+	<tr><td>~0.5</td><td>large effect</td></tr>
+</table>
+
+
+The values for _t_ and _df_ can be extracted from the result of `t.test()` and the value of `r` calculated. Let's specify a custom function to do this for us.
+
+
+> ## Making a function
+> Functions are the building blocks of R and it allows you to make your own. Its actually quite easy, its just a call to the `function()` and some regular R code surrounded by a couple of curly brackets - `{ }`. Here's how we'd define our own squaring function:
+>
+> `my_square <- function(x){ return(x * x) }`
+>
+> Now `my_square()` is a new function in R. We can use it like:
+>
+> `my_square(2)`
+>
+> `[1] 4`
+>
+> * The `x` is a temporary name for any data you want to use within the function. 
+> * The `return()` keyword simply tells the function what to send you back here
+> * To send data into the function you simply put it in the brackets after the function name.
+> * The R code in the function can be as long as you want and split over many lines
+{: .callout}
+
+
+Here's a custom function for _r_,
+```{r}
+rosenthal_r <- function(t_test_result){
+	t <- t_test_result$statistic[[1]]
+	df <- t_test_result$parameter[[1]]
+	r <- sqrt(t^2/(t^2+df))
+	return(r)
+}
+```
+Here's how we use it:
+
+```{r}
+my_t <- t.test(Petal.Width ~ Species, data=small_iris)
+rosenthal_r(my_t)
+```
+
+Functions are useful because they are reuseable and save lots of typing.  The actual value of _r_ we get here is 0.96, which is considered a large effect.
+
+
+## Linear regression
+Linear regression (or as some think of it - correlation analysis) is at the base of a whole lot of statistics. In R it's done with the `lm()` function. `lm` stands for 'linear model' as the resulting formula gives us a line in the form `y=mx+c` that describes the relationship between our input data and can be used as a model to make predictions. Doing an `lm()` is similar to the `t.test()`.
+
+```{r}
+lm(Petal.Width ~ Petal.Length, data=iris)
+
+```
+
+Which is the minimal information we need the first number (Intercept) -0.3631 is the `c` of `y=mx+c`, the place where the axis is crossed and the other (Petal.Length, 0.4158) is the gradient of the line. But we also want the _p_ and _R_ values, these are obtained by using the summary function on the result of `lm()`.
+
+```{r}
+l <- lm(Petal.Width ~ Petal.Length, data=iris)
+summary(l)
+```
+
+Where we can see that the _R_ is 0.9266 and _p_ is again < 2.2e-16. 
+
+The `lm()` function works fine for a dataset with only one factor, in this example we've completely ignored the fact that the `Petal.Length` and `Petal.Width` are from 3 species. If we want to do the linear model species wise, we need to filter the data first 
+
+```{r}
+ve <- filter(iris, Species == "versicolor")
+lm(Petal.Width ~ Petal.Length, data=ve)
+
+```
+
+## One Way ANOVA
+The ANOVA is actually based on a linear model so we need to construct that first, again with the `lm()` function. This time we use the factor we want to use to split the data up as the second variable. We do the actual ANOVA with `aov()` function and get the answers with the `summary.lm()` function on that.
+
+```{r}
+l <- lm(Petal.Width ~ Species, data = iris)
+a <- aov(l)
+summary.lm(a)
+```
+
+Then we can apply Tukey's HSD to get the actual _p_-values between groups.
+```{r}
+TukeyHSD(a)
+```
+
+where the column `diff` gives us the difference between means, the `lwr` and `upr` bounds are the confidence interval and `p adj` is the _p_ value rounded off. Here Petal Widths are significantly different between the species. 
+
+
+> ## Quiz
+> 1. Using the `mtcars` dataset, work out whether the number of cylinders (cyl) in a car has an effect on the mpg (miles per gallon), specifically answer whether any difference is statistically significant and substantial.
+> Hints: Remember to use the `str()` function to check factors are factors. A one-way ANOVA should be appropriate for this sort of data. The `F` statistic or ratio is a good estimate of effect size.
+> Extra Credit: Do any of the warnings about 'unbalanced' design make you worry about the results of the test?
+{: .challenge}
