@@ -1,0 +1,159 @@
+---
+title: "ggplot2 Tour"
+teaching: 20
+exercises: 30
+questions:
+- "How does ggplot2 work?"
+objectives:
+- "Explain the structure of a ggplot2"
+- "Explain the flexibilty of the structure"
+keypoints:
+- "ggplot2 plots are made in user defined layers"
+- "Using layers helps us to change plot types quickly or build progressively more complex charts"
+---
+
+```{r, echo=FALSE}
+source("../bin/chunk-options.R")
+knitr_fig_path("03-")
+```
+
+## Building a plot with _ggplot2_
+Loading _ggplot2_ into memory so we can use it is very easy. With RStudio started, and in the console window type:
+
+```{r}
+library(ggplot2)
+```
+
+Nothing should happen, thats a good sign!
+
+> ## It didn't load - I got an error
+> You need to go back and look at the install instructions, using the packages tab in the bottom right hand window of R studio, click `install` and type `ggplot2` into the window that appears. Select `install` and it should automatically install. If this doesn't work seek some expert help. 
+{: .callout }
+
+### Loading the iris test data
+
+R has some datasets built in that allow us to easily develop analysis. Let's look at the `iris` data
+
+```{r}
+iris
+```
+
+
+
+R just printed the whole thing to screen and we end up looking at just the bottom end of it. Let's look at just the top.
+
+```{r}
+head(iris)
+```
+
+We can see that we have the top six rows and we can see that the data is a list of measurments of the sepals and petals for some species of iris. Let's get a summary of the data set:
+
+```{r}
+summary(iris)
+```
+
+
+Alright, that's quite clear, some summary values for each numeric column and note how R has calculated the number of rows of each distinct label for the text column.
+
+### A first plot
+
+_ggplot2_ plots are built up of layers, the foundation layer is the data layer, thats the whole data set containing the bits we would want to plot. We define that with the `ggplot2` command.
+
+```{r}
+library(ggplot2) 
+ggplot(data=iris)
+```
+
+Nothing happened, you got a blank screen in the plot window to the right. That's because a data layer alone doesn't tell us what, or how to plot. It's just the source of the numbers we'll use.
+
+The next thing we need is an `aesthetic` layer. This is basically the things to look at, and includes:
+
+	 1. x and y axes (sometimes called position)
+	 2. colour (the line colour of a thing)
+	 3. fill (the block colour of a thing) 
+	 4. shape (e.g of points)
+	 5. line type
+	 6. size (e.g of points)
+
+Let's decide to look at petal width and length. We use the `aes()` function for the aesthetic and we can add layers together with the `+` operator.
+
+
+```{r}  
+ggplot(data=iris) + aes(x=Petal.Width, y=Petal.Length)
+```
+
+This time we get axes in the plot window. _ggplot_ now knows the data source and the things that should be displayed on the axis, but it doesn't fully know _how_ to display them. That is done in the `geom` (or geometric objects) layer. There are loads of geoms e.g
+
+	1. `geom_point()` for scatter plots
+	2. `geom_line()` for trend lines
+	3. `geom_boxplot()` for boxplots!
+	
+Let's add a geom layer.
+
+```{r}
+ggplot(data=iris) + aes(x=Petal.Width, y=Petal.Length) + geom_point()
+```
+
+Now we see the whole plot. The data has been mapped onto the right axes and the geometric objects on top of that. Let's go crazy and add more layers.
+
+```{r}
+ggplot(data=iris) + aes(x=Petal.Width, y=Petal.Length) + geom_point() + geom_line()
+```
+
+You can see the new geom just adds straight on top of the old one. By default, `geom_line()` is a simple join the dots sort of line, so it looks really squiggly. Different layers can have their own options set, e.g the points can be coloured.
+
+
+```{r}
+ggplot(data=iris) + aes(x=Petal.Width, y=Petal.Length) + geom_point(colour="Red") + geom_line()
+```
+
+
+> ## Making and saving a base plot
+> There is actually no need to go round typing in the whole command above repetively all the time. _ggplot2_ layers can be saved to R variables like this:
+>
+> `p <- ggplot(data=iris) + aes(x=Petal.Width, y=Petal.Length)`
+>
+> and the bits we want to add or change stuck on top:
+>
+> `p + geom_point()`
+{: .callout}
+
+## Mappings versus assignment
+
+The power of _ggplot_ to 'just do the right thing' comes from its use of mappings, these can be thought of as rules for what to do when it meets a bit of data in a particular place. 
+
+Above we set the colour, `geom_point()` to `"Red"`. This set all the points to red, it was an assignment, since ggplot didn't have anything to work out, every point is just red. By setting the colour to a column in the data we can make ggplot work colours out for us dependent on the information in that column. Try:
+
+```{r}
+p <- ggplot(data=iris) + aes(x=Petal.Width, y=Petal.Length)
+p + geom_point(aes(colour=Species))
+```
+
+This time we told ggplot to use the value of the Species column to colour each data point, ggplot decided on a mapping for a list of colours to each different value in the Species column and drew that on the plot for us. Only aesthetics can be mappings, so we had to use an `aes()` function inside the geom.
+
+Lots of aesthetic features can be mapped to data, try `size` and `shape`, and try mixing them.
+
+```{r}
+p + geom_point(aes(size=Species))
+```
+```{r}
+p + geom_point(aes(colour=Species))
+```
+```{r}
+p + geom_point(aes(shape=Species))
+```
+```{r}
+p + geom_point(aes(size=Species,colour=Species,shape=Species))
+```
+
+> ## Quiz
+> 1. Use the docs at [http://docs.ggplot2.org/current/](http://docs.ggplot2.org/current/) to examine the geoms that are available. Try `geom_jitter()`, why choose this over `geom_point()`? 
+> 2. Use this base plot `p <- ggplot(data=iris) + aes(x=Petal.Width, y=Petal.Length)`
+> 3. What happens if you map a continuous variable to an aesthetic like colour? EG `aes(color=Petal.Width)`
+> 4. Try combining `geom_smooth()` with `geom_jitter()`
+> 5. Why doesn't `geom_boxplot()` work? (Hint: you need to think about the difference between categorical or discrete and continuous data). 
+> 6. How could you make `geom_boxplot()` show you boxplots for the three species Petal.Width. (Hint: you need to think about the aesthetic and where you set it. 
+{: .challenge}
+
+
+ 

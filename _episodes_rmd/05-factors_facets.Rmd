@@ -1,0 +1,129 @@
+---
+title: "Using Factors to Subset Data and Plots"
+teaching: 15
+exercises: 30
+questions:
+- "How can I make plots that compare multiple categories?"
+objectives:
+- "Understand factors"
+- "Understand colouring and faceting on factors"
+- "Use factors for summaries and plot design"
+keypoints:
+- "A factor is a value of a categorical variable, or the different values a label can take"
+- "Factors are needed to subset and add attributes to data dynamically"
+---
+```{r, echo=FALSE}
+source("../bin/chunk-options.R")
+knitr_fig_path("05-")
+```
+
+## Factors
+
+In previous plots we've been using categories, specifically the `Species` category to split our data, colour our plots etc. These categorical columns are called Factors in R. Looking at the `diamonds` data set we can see how this is set up in R.
+
+```{r}
+head(diamonds)
+```
+
+
+Here we can see the `cut`, `color` and `clarity` columns are all non-numeric, textual data. These are the factor variables of this dataset. We can confirm that by asking for the `class` of the column, that is, the type of data in it. We use the dataset `$` column name syntax for this.
+
+```{r}
+class(diamonds$color)
+```
+```{r}
+class(diamonds$depth)
+```
+
+
+We can also ask for all the different values of the factor, in R called the levels
+```{r}
+levels(diamonds$color)
+```
+```{r}
+levels(diamonds$cut)
+```
+## Colouring by factors
+
+Let's look at applying mappings by a factor. Let's look at how price varies by cut.
+
+```{r}
+p <- ggplot(diamonds) +  aes(cut,price) 
+p + geom_jitter()
+```
+
+Now let's throw a second variable in there, lets see how color varies within each cut. We do this by creating a new aesthetic mapping within the geom_jitter()
+
+```{r}
+p + geom_jitter(aes(colour=color))
+```
+
+The spots are all overlapping, we can force the different colours to stay separate with the `position` option. We use `position_dodge()` to make them dodge each other. The width option tells the spots how far to stay apart.
+
+```{r}
+p + geom_jitter(aes(colour=color), position=position_dodge(width=0.5) )
+```
+
+We can also throw other geoms on top in the same way. EG Boxplots for each cut and colour
+
+```{r}
+p + geom_jitter(aes(colour=color), position=position_dodge(width=0.5) ) + geom_boxplot( aes(colour=color), position=position_dodge() )
+```
+
+Remember layers/geoms are independent, so can be set up to show individual aspects of the data. Let's have a boxplot for the whole of the cut, irrespective of the colour.
+```{r}
+p + geom_jitter(aes(colour=color),position=position_dodge(width=0.5)) + geom_boxplot() 
+```
+
+And of course, the whole thing still works even if we are comparing two numerical columns. We can still use the aesthetic mapping in the geom to colour our points by a factor
+
+```{r}
+ggplot(diamonds) + aes(carat, price) + geom_point(aes(colour=cut))
+```
+
+## Small multiple plots
+Sometimes, trying to squeeze a lot of data into one plot isn't the clearest way to show it. Instead small multiple plots (different data, same settings) can be used. In ggplot, this is called faceting and is done with the `facet_wrap()` or `facet_grid()` function. We use the factors to define the facet.  Let's add faceting to the previous plot
+
+```{r}
+p <- ggplot(diamonds) + aes(carat, price) 
+p + geom_point(aes(colour=cut)) + facet_wrap( ~ cut)
+```
+
+Here we see the plot is divided into panels, one for each 'cut'. The `facet_wrap()` function puts all the panels into a single row, but wll wrap that row as space demands. The syntax is a bit odd, we used the `~` operator to mean 'varies by' , even though we only used one variable. It's just a quirk of ggplot.
+
+The `facet_grid()` function forces a grid structure and can take more than one factor. Now the `~` 'varies by' syntax makes more sense:
+```{r}
+p + geom_point(aes(colour=cut)) + facet_grid(color ~ cut)
+```
+
+## Summary Statistics 
+Factors are powerful things for helping us to quickly get summary statistics, and not just plots out of the data. We already saw how to generate summary statistics on a whole dataset using the `summary()` function. 
+
+```{r}
+ summary(iris)
+```
+
+But a better way to summarise by factor is with the `describeBy()` function in the `psych` package. Note you need to use `$` notation to describe the column with the factor you want to subset with. 
+
+```{r}
+library(psych)
+describeBy(iris, iris$Species)
+```
+With this you can get a nice, comprehensive table of summary statistics across all the numerical columns, divided by the chosen factor.
+
+For combinations of factors, you can use the `ddply()` function in the `plyr` package. Here you can choose a list of factors to summarise, but you must name the output columns and the R function to use. Helpfully the R function for a mean is `mean()` and the function for standard deviation is `sd()`.
+
+Here, we divide up on `cut` and `colour` using the make-a-list function `c()`, we tell `ddply` we want to `summarise` and that it should add a `mean` column using the `mean()` function and an `sd` column using the `sd(function)`
+
+```{r}
+library(plyr)
+ddply(diamonds, c('cut', 'color'), summarise, mean=mean(price), sd=sd(price) )
+```
+> ## Quiz
+> The built in dataset `CO2` describes measurement of CO2 uptake versus concentration for Quebec and Mississippi grasses in chilled and nonchilled tests. The dataset is as follows:
+> * `Type` is a factor column with two levels `Quebec` and `Mississippi`
+> * `Treatment` is a factor colum with two levels `nonchilled` and `chilled`
+> * `Uptake` is a numerical colum with CO2 uptake rate in micromoles per metre squared per second
+> * `Plant` is a factor with twelve levels, one for each individual plant assayed.
+> 1. Create a plot with `geom_point()` that shows the Plant on the _x_-axis and the Uptake on the _y_-axis. Colour the points by 'Type' and `facet_wrap()` by `Treatment` to get a subplot for chilled and nonchilled.
+{: .challenge}
