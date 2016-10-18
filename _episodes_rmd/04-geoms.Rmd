@@ -25,16 +25,14 @@ Let's look at some geoms that use continuous data on the x and y axis.
 
 The built in geom `geom_smooth()` is a great one for getting a nice summary line through the data
 
-~~~
+```{r}
 p <- ggplot(iris) + aes(Petal.Width,Petal.Length) + geom_point()
 p + geom_smooth()
-~~~
-{: .source}
-
+```
 By default, this isn't a simple line of best fit, as you can see the smoothed line has curves! And it has a grey region that shows the standard error of the line. To get the standard line of the form `y=mx+c`, use
 
 ```{r}
-p <- geom_smooth(method = "lm", se = FALSE)
+p + geom_smooth(method = "lm", se = FALSE)
 ```
 
 ### What's the r<sup>2</sup>?
