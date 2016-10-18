@@ -22,19 +22,23 @@ Let's look at some geoms that use continuous data on the x and y axis.
 
 The built in geom `geom_smooth()` is a great one for getting a nice summary line through the data
 
+
 ~~~
 p <- ggplot(iris) + aes(Petal.Width,Petal.Length) + geom_point()
 p + geom_smooth()
 ~~~
-{: .source}
+{: .r}
 
+<img src="../fig/rmd-04-unnamed-chunk-2-1.png" title="plot of chunk unnamed-chunk-2" alt="plot of chunk unnamed-chunk-2" style="display: block; margin: auto;" />
 By default, this isn't a simple line of best fit, as you can see the smoothed line has curves! And it has a grey region that shows the standard error of the line. To get the standard line of the form `y=mx+c`, use
 
 
 ~~~
-p <- geom_smooth(method = "lm", se = FALSE)
+p + geom_smooth(method = "lm", se = FALSE)
 ~~~
 {: .r}
+
+<img src="../fig/rmd-04-unnamed-chunk-3-1.png" title="plot of chunk unnamed-chunk-3" alt="plot of chunk unnamed-chunk-3" style="display: block; margin: auto;" />
 
 ### What's the r<sup>2</sup>?
 Having shown you how to put the line of best fit on the graph, you probably want to know how to get the equation and r<sup>2</sup> value. That takes a little bit of pure R. Here's how, using the `lm` linear model function. The syntax for this is `lm(y ~ x, dataset)` so for the iris data and the graph we just made (note the order Y and X is used in not the order X and Y)
@@ -99,12 +103,7 @@ p + geom_point() + geom_jitter(colour="Red")
 ~~~
 {: .r}
 
-
-
-~~~
-Error in p + geom_point(): non-numeric argument to binary operator
-~~~
-{: .error}
+<img src="../fig/rmd-04-unnamed-chunk-6-1.png" title="plot of chunk unnamed-chunk-6" alt="plot of chunk unnamed-chunk-6" style="display: block; margin: auto;" />
 
 We can fiddle with the range of the jitter with `width` and `height` options
 
@@ -114,12 +113,7 @@ p + geom_point() + geom_jitter(colour="Red", width=0.001, height=0.001)
 ~~~
 {: .r}
 
-
-
-~~~
-Error in p + geom_point(): non-numeric argument to binary operator
-~~~
-{: .error}
+<img src="../fig/rmd-04-unnamed-chunk-7-1.png" title="plot of chunk unnamed-chunk-7" alt="plot of chunk unnamed-chunk-7" style="display: block; margin: auto;" />
 
 conversely,
 
@@ -128,12 +122,7 @@ p + geom_point() + geom_jitter(colour="Red", width=10, height=10)
 ~~~
 {: .r}
 
-
-
-~~~
-Error in p + geom_point(): non-numeric argument to binary operator
-~~~
-{: .error}
+<img src="../fig/rmd-04-unnamed-chunk-8-1.png" title="plot of chunk unnamed-chunk-8" alt="plot of chunk unnamed-chunk-8" style="display: block; margin: auto;" />
 
 The defaults are usually a good choice though.
 
@@ -147,12 +136,7 @@ p + geom_point() + geom_jitter(alpha=0.5)
 ~~~
 {: .r}
 
-
-
-~~~
-Error in p + geom_point(): non-numeric argument to binary operator
-~~~
-{: .error}
+<img src="../fig/rmd-04-unnamed-chunk-9-1.png" title="plot of chunk unnamed-chunk-9" alt="plot of chunk unnamed-chunk-9" style="display: block; margin: auto;" />
 
 ### geom_histogram()
 
@@ -172,7 +156,7 @@ p + geom_histogram()
 ~~~
 {: .output}
 
-<img src="../fig/rmd-04-unnamed-chunk-9-1.png" title="plot of chunk unnamed-chunk-9" alt="plot of chunk unnamed-chunk-9" style="display: block; margin: auto;" />
+<img src="../fig/rmd-04-unnamed-chunk-10-1.png" title="plot of chunk unnamed-chunk-10" alt="plot of chunk unnamed-chunk-10" style="display: block; margin: auto;" />
 
 
 You can change the width of the bins with `binwidth`, or set the number of bins with `bins`
@@ -182,14 +166,14 @@ p + geom_histogram(binwidth=0.5)
 ~~~
 {: .r}
 
-<img src="../fig/rmd-04-unnamed-chunk-10-1.png" title="plot of chunk unnamed-chunk-10" alt="plot of chunk unnamed-chunk-10" style="display: block; margin: auto;" />
+<img src="../fig/rmd-04-unnamed-chunk-11-1.png" title="plot of chunk unnamed-chunk-11" alt="plot of chunk unnamed-chunk-11" style="display: block; margin: auto;" />
 
 ~~~
 p + geom_histogram(bins=5) 
 ~~~
 {: .r}
 
-<img src="../fig/rmd-04-unnamed-chunk-10-2.png" title="plot of chunk unnamed-chunk-10" alt="plot of chunk unnamed-chunk-10" style="display: block; margin: auto;" />
+<img src="../fig/rmd-04-unnamed-chunk-11-2.png" title="plot of chunk unnamed-chunk-11" alt="plot of chunk unnamed-chunk-11" style="display: block; margin: auto;" />
 
 Trying to map the species to colour in this one gives us a weird sort of stacked histogram.
 
@@ -199,7 +183,7 @@ p + geom_histogram(bins=5, aes(colour=Species, fill=Species),alpha=0.3 )
 ~~~
 {: .r}
 
-<img src="../fig/rmd-04-unnamed-chunk-11-1.png" title="plot of chunk unnamed-chunk-11" alt="plot of chunk unnamed-chunk-11" style="display: block; margin: auto;" />
+<img src="../fig/rmd-04-unnamed-chunk-12-1.png" title="plot of chunk unnamed-chunk-12" alt="plot of chunk unnamed-chunk-12" style="display: block; margin: auto;" />
 
 We can avoid this in a few ways, one is by using `geom_freqpoly()`, which is a line graph joining the tops of the bars of the histogram.
 
@@ -209,7 +193,7 @@ p + geom_freqpoly( aes(colour=Species), bins=5 )
 ~~~
 {: .r}
 
-<img src="../fig/rmd-04-unnamed-chunk-12-1.png" title="plot of chunk unnamed-chunk-12" alt="plot of chunk unnamed-chunk-12" style="display: block; margin: auto;" />
+<img src="../fig/rmd-04-unnamed-chunk-13-1.png" title="plot of chunk unnamed-chunk-13" alt="plot of chunk unnamed-chunk-13" style="display: block; margin: auto;" />
 
 or with `geom_density()` which gives us smoothed lines from a kernel density estimate of the data (which is a way of generating a smooth curve over histograms). 
 
@@ -219,7 +203,7 @@ p + geom_density( aes(colour=Species, fill=Species), alpha=0.3)
 ~~~
 {: .r}
 
-<img src="../fig/rmd-04-unnamed-chunk-13-1.png" title="plot of chunk unnamed-chunk-13" alt="plot of chunk unnamed-chunk-13" style="display: block; margin: auto;" />
+<img src="../fig/rmd-04-unnamed-chunk-14-1.png" title="plot of chunk unnamed-chunk-14" alt="plot of chunk unnamed-chunk-14" style="display: block; margin: auto;" />
 
 
 ## Discrete geoms
@@ -237,14 +221,14 @@ p + geom_point()
 ~~~
 {: .r}
 
-<img src="../fig/rmd-04-unnamed-chunk-14-1.png" title="plot of chunk unnamed-chunk-14" alt="plot of chunk unnamed-chunk-14" style="display: block; margin: auto;" />
+<img src="../fig/rmd-04-unnamed-chunk-15-1.png" title="plot of chunk unnamed-chunk-15" alt="plot of chunk unnamed-chunk-15" style="display: block; margin: auto;" />
 
 ~~~
 p + geom_jitter()
 ~~~
 {: .r}
 
-<img src="../fig/rmd-04-unnamed-chunk-14-2.png" title="plot of chunk unnamed-chunk-14" alt="plot of chunk unnamed-chunk-14" style="display: block; margin: auto;" />
+<img src="../fig/rmd-04-unnamed-chunk-15-2.png" title="plot of chunk unnamed-chunk-15" alt="plot of chunk unnamed-chunk-15" style="display: block; margin: auto;" />
 
 ### geom_boxplot() and geom_violin()
 
@@ -257,7 +241,7 @@ p + geom_jitter() + geom_boxplot()
 ~~~
 {: .r}
 
-<img src="../fig/rmd-04-unnamed-chunk-15-1.png" title="plot of chunk unnamed-chunk-15" alt="plot of chunk unnamed-chunk-15" style="display: block; margin: auto;" />
+<img src="../fig/rmd-04-unnamed-chunk-16-1.png" title="plot of chunk unnamed-chunk-16" alt="plot of chunk unnamed-chunk-16" style="display: block; margin: auto;" />
 
 Which unhelpfully puts the newest layer on top. Reverse the order to see the points
 
@@ -274,7 +258,7 @@ notch went outside hinges. Try setting notch=FALSE.
 ~~~
 {: .output}
 
-<img src="../fig/rmd-04-unnamed-chunk-16-1.png" title="plot of chunk unnamed-chunk-16" alt="plot of chunk unnamed-chunk-16" style="display: block; margin: auto;" />
+<img src="../fig/rmd-04-unnamed-chunk-17-1.png" title="plot of chunk unnamed-chunk-17" alt="plot of chunk unnamed-chunk-17" style="display: block; margin: auto;" />
 
 
 A common reason for using the boxplot is to use those notches to show the significant differences in the data. But really, these only help you assess a difference meaningfully if the data are normally distributed. In other circumstances you should be aware that the notches are misleading. Instead you can see the spread of your data much better with a violin plot.
@@ -286,7 +270,7 @@ p + geom_violin() + geom_jitter()
 ~~~
 {: .r}
 
-<img src="../fig/rmd-04-unnamed-chunk-17-1.png" title="plot of chunk unnamed-chunk-17" alt="plot of chunk unnamed-chunk-17" style="display: block; margin: auto;" />
+<img src="../fig/rmd-04-unnamed-chunk-18-1.png" title="plot of chunk unnamed-chunk-18" alt="plot of chunk unnamed-chunk-18" style="display: block; margin: auto;" />
 
 By turning your head to the side you can see the histogram curve / density distribution a bit more clearly. In fact ggplot has a way to flip a plot, one of a set of things called a transformation.
 
@@ -296,7 +280,7 @@ p + geom_violin() + geom_jitter() + coord_flip()
 ~~~
 {: .r}
 
-<img src="../fig/rmd-04-unnamed-chunk-18-1.png" title="plot of chunk unnamed-chunk-18" alt="plot of chunk unnamed-chunk-18" style="display: block; margin: auto;" />
+<img src="../fig/rmd-04-unnamed-chunk-19-1.png" title="plot of chunk unnamed-chunk-19" alt="plot of chunk unnamed-chunk-19" style="display: block; margin: auto;" />
 
 Now you can see clearly that the setosa numbers are really badly bunched down at the lower end and a bit skewed by that. 
 
